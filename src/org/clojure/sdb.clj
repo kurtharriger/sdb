@@ -111,7 +111,6 @@
 (defmethod to-sdb-str Boolean [z] (encode-sdb-str "z" z))
 (defmethod to-sdb-str Double [d]
            (encode-sdb-str "d" (DataUtils/encodeDouble d)))
-(defmethod to-sdb-str nil [n] nil)
 
 (defmulti decode-sdb-str (fn [tag s] tag))
 (defmethod decode-sdb-str "s" [_ s] s)
@@ -140,9 +139,10 @@
             #{} (item-attrs item))))
 
 (defn- update-condition [condition]
-  (UpdateCondition. (to-sdb-str (:name condition))
-                    (to-sdb-str (:value condition))
-                    (:exists condition)))
+  (let [safe-to-sdb-str (fn [v] (if (nil? v) nil (to-sdb-str v)))]
+    (UpdateCondition. (safe-to-sdb-str (:name condition))
+                    (safe-to-sdb-str (:value condition))
+                    (:exists condition))))
 
 (defn- replaceable-attrs [item add-to?]
   (map (fn [[k v]] (doto (ReplaceableAttribute.)
