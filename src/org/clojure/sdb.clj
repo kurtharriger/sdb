@@ -24,7 +24,7 @@
      DeleteAttributesRequest DeleteDomainRequest DomainMetadataRequest  
      GetAttributesRequest Item ListDomainsRequest  
      PutAttributesRequest ReplaceableAttribute ReplaceableItem
-     SelectRequest)
+     SelectRequest UpdateCondition)
    (com.amazonaws.services.simpledb.util SimpleDBUtils)
    (com.amazonaws.auth BasicAWSCredentials)
    (com.amazonaws ClientConfiguration)
@@ -111,6 +111,7 @@
 (defmethod to-sdb-str Boolean [z] (encode-sdb-str "z" z))
 (defmethod to-sdb-str Double [d]
            (encode-sdb-str "d" (DataUtils/encodeDouble d)))
+(defmethod to-sdb-str nil [n] nil)
 
 (defmulti decode-sdb-str (fn [tag s] tag))
 (defmethod decode-sdb-str "s" [_ s] s)
@@ -138,6 +139,11 @@
                 (conj ts {:s s :p k :o v}))
             #{} (item-attrs item))))
 
+(defn update-condition [condition]
+  (UpdateCondition. (to-sdb-str (:name condition))
+                    (to-sdb-str (:value condition))
+                    (:exists condition)))
+
 (defn- replaceable-attrs [item add-to?]
   (map (fn [[k v]] (doto (ReplaceableAttribute.)
 			  (.setName (to-sdb-str k))
@@ -151,10 +157,12 @@
   function (usually a set), and when it returns true for a key, values
   will be added to the set of values at that key, if any."
   ([client domain item] (put-attrs client domain item #{}))
-  ([client domain item add-to?]
+  ([client domain item add-to?] (put-attrs client domain item add-to? #{}))
+  ([client domain item add-to? condition]
     (let [item-name (to-sdb-str (:sdb/id item))
-          attrs (replaceable-attrs item add-to?)]
-      (.putAttributes client (PutAttributesRequest. domain item-name attrs)))))
+          attrs (replaceable-attrs item add-to?)
+          expected (update-condition condition)]
+      (.putAttributes client (PutAttributesRequest. domain item-name attrs expected)))))
 
 (defn batch-put-attrs
   "Puts the attrs for multiple items into a domain, with the same semantics as put-attrs"
