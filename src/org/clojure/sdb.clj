@@ -139,7 +139,7 @@
                 (conj ts {:s s :p k :o v}))
             #{} (item-attrs item))))
 
-(defn update-condition [condition]
+(defn- update-condition [condition]
   (UpdateCondition. (to-sdb-str (:name condition))
                     (to-sdb-str (:value condition))
                     (:exists condition)))
