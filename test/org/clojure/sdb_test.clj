@@ -1,13 +1,13 @@
 (ns org.clojure.sdb-test
-  "This test suite will run some basic tests against a live Amazon SimpleDB account.  You may want to use a Sandbox/Mock DB service for testing.  The test suite will use a random domain name ('sdb-test-UUID') to prevent conflicts with your existing data."
+  "This test suite will run some basic tests against a live Amazon SimpleDB account.  You may want to use a Sandbox/Mock DB service for testing.  The test suite will use a random domain name ('sdbtestUUID') to prevent conflicts with your existing data."
   (:use [org.clojure.sdb] :reload-all)
   (:use [clojure.test]))
 
 
 ; Be careful not to save your credentials into a public repo.
-(def *AWS-ACCESS-KEY-ID* "your-aws-access-key")
-(def *AWS-SECRET-ACCESS-KEY* "your-aws-secret-key")
-;(load-file (str (System/getProperty "user.home") "/.aws.keys.clj"))
+;(def *AWS-ACCESS-KEY-ID* "your-aws-access-key")
+;(def *AWS-SECRET-ACCESS-KEY* "your-aws-secret-key")
+(load-file (str (System/getProperty "user.home") "/.aws.keys.clj"))
 
 ;get logging to calm down, else noisy at REPL 
 ;(org.apache.log4j.PropertyConfigurator/configure "debug.log4j.properties")
@@ -24,8 +24,9 @@
 
 (defn setup-fixture []
   (def client (create-client *AWS-ACCESS-KEY-ID* *AWS-SECRET-ACCESS-KEY*))
-  (def *test-domain-name* (str "sdb-test-"
-			       (.toString (java.util.UUID/randomUUID))))
+;SimpleDB fails with "The specified query expression syntax is not valid." if the domain name contains "-"
+(def *test-domain-name* (.replaceAll (str "sdb-test-"
+                             (.toString (java.util.UUID/randomUUID))) "-" ""))
   (def *test-domain-created* (ref false))
 
   (if (not-any? #{*test-domain-name*} (domains client))
@@ -213,5 +214,5 @@
   (test-conditional-put-success)
   (test-conditional-put-failure)
   (test-remove-bits)
-  ;(test-query)
+  (test-query)
   (tear-down-fixture))
