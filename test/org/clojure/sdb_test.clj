@@ -7,8 +7,10 @@
 ; Be careful not to save your credentials into a public repo.
 (def *AWS-ACCESS-KEY-ID* "your-aws-access-key")
 (def *AWS-SECRET-ACCESS-KEY* "your-aws-secret-key")
+;(load-file (str (System/getProperty "user.home") "/.aws.keys.clj"))
 
 ;get logging to calm down, else noisy at REPL 
+;(org.apache.log4j.PropertyConfigurator/configure "debug.log4j.properties")
 (org.apache.log4j.PropertyConfigurator/configure 
  (doto (java.util.Properties.) 
    (.setProperty "log4j.rootLogger" "WARN")
@@ -146,9 +148,10 @@
 (deftest test-remove-bits
   (let [item (get-attrs client *test-domain-name* (uuid "e76589f6-34e5-4a14-8af6-b70bf0242d7d"))]
     (is (= (:Name item) "Sweatpants"))
-    (is (= (:size item) "Large")))
+    (is (= (:size item) "Medium")))
   ; Delete the Name and size attributes
   (delete-attrs client *test-domain-name* (uuid "e76589f6-34e5-4a14-8af6-b70bf0242d7d") #{:Name :size})
+   (sleep)
    (let [item (get-attrs client *test-domain-name* (uuid "e76589f6-34e5-4a14-8af6-b70bf0242d7d"))]
     (is (nil? (:Name item)))
     (is (nil? (:size item))))
@@ -182,6 +185,20 @@
     (is (= (count result) 5) "Confirm that 5 records were returned")
     (is (= (:model (first result) "S4")))))
 
+(deftest test-conditional-put-success
+  (put-attrs client *test-domain-name*
+	     {:sdb/id (uuid "e76589f6-34e5-4a14-8af6-b70bf0242d7d"),
+	      :size "Medium"},
+             #{},
+             {:name :size, :value "Large"}))
+
+(deftest test-conditional-put-failure
+  (is (thrown-with-msg? com.amazonaws.AmazonServiceException #"Conditional check failed."
+        (put-attrs client *test-domain-name*
+	     {:sdb/id (uuid "e76589f6-34e5-4a14-8af6-b70bf0242d7d"),
+	      :size "Small"},
+             #{},
+             {:name :size, :value "Large"}))))
 
 (defn test-ns-hook
   "Use this hook instead of use-fixtures so that we can control setup and execution order."
@@ -193,6 +210,8 @@
   (test-get-part-of-one)
   (test-delete-attrs)
   (test-delete-record)
+  (test-conditional-put-success)
+  (test-conditional-put-failure)
   (test-remove-bits)
-  (test-query)
+  ;(test-query)
   (tear-down-fixture))
