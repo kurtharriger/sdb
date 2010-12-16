@@ -167,11 +167,11 @@
 
 (deftest test-query
   (let [result (query client
-		      '{;:select ids
+		      `{;:select ids
 			;:select count
 			:select *
 			;:select [:Name, :color]
-			:from "test"
+			:from ~*test-domain-name*
 			:where (or
 				(and (= :category "Clothes") (= :subcat "Pants"))
 				(= :category "Car Parts"))})]
@@ -180,7 +180,7 @@
 
   ;parameterized query is just syntax-quote!
   (let [cat "Clothes"
-	result (query client `{:select * :from "test" :where (or (= :category ~cat)
+	result (query client `{:select * :from ~*test-domain-name* :where (or (= :category ~cat)
 							  (= :category "Car Parts"))})]
     (is (= (count result) 5) "Confirm that 5 records were returned")
     (is (= (:model (first result) "S4")))))
