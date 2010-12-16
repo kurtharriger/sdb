@@ -266,7 +266,7 @@
       'ids "itemName()"
       'count "count(*)"
       (cl-format nil "~{~a~^, ~}" (map attr-str (:select m))))
-    " from " (:from m)
+    " from " (str \` (:from m) \`)
     (when-let [w (:where m)]
       (str " where " (where-str w)))
     (when-let [s (:order-by m)]

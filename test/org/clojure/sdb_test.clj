@@ -1,5 +1,5 @@
 (ns org.clojure.sdb-test
-  "This test suite will run some basic tests against a live Amazon SimpleDB account.  You may want to use a Sandbox/Mock DB service for testing.  The test suite will use a random domain name ('sdbtestUUID') to prevent conflicts with your existing data."
+  "This test suite will run some basic tests against a live Amazon SimpleDB account.  You may want to use a Sandbox/Mock DB service for testing.  The test suite will use a random domain name ('sdb-test-UUID') to prevent conflicts with your existing data."
   (:use [org.clojure.sdb] :reload-all)
   (:use [clojure.test]))
 
@@ -24,9 +24,8 @@
 
 (defn setup-fixture []
   (def client (create-client *AWS-ACCESS-KEY-ID* *AWS-SECRET-ACCESS-KEY*))
-;SimpleDB fails with "The specified query expression syntax is not valid." if the domain name contains "-"
-(def *test-domain-name* (.replaceAll (str "sdb-test-"
-                             (.toString (java.util.UUID/randomUUID))) "-" ""))
+  (def *test-domain-name* (str "sdb-test-"
+			       (.toString (java.util.UUID/randomUUID))))
   (def *test-domain-created* (ref false))
 
   (if (not-any? #{*test-domain-name*} (domains client))
@@ -187,11 +186,13 @@
     (is (= (:model (first result) "S4")))))
 
 (deftest test-conditional-put-success
-  (put-attrs client *test-domain-name*
-	     {:sdb/id (uuid "e76589f6-34e5-4a14-8af6-b70bf0242d7d"),
+  (do        
+    (put-attrs client *test-domain-name*
+               {:sdb/id (uuid "e76589f6-34e5-4a14-8af6-b70bf0242d7d"),
 	      :size "Medium"},
              #{},
-             {:name :size, :value "Large"}))
+             {:name :size, :value "Large"})
+    (sleep)))
 
 (deftest test-conditional-put-failure
   (is (thrown-with-msg? com.amazonaws.AmazonServiceException #"Conditional check failed."
