@@ -50,7 +50,16 @@ $ python SimpleDB-Dev/src/simpledb_dev.py &
 
 In your code:
 
-(create-client my-sdb-key my-sdb-secret-key
-               (.withServiceURL (com.amazonaws.sdb.AmazonSimpleDBConfig.)
-                                "http://localhost:8080")))
+;(create-client my-sdb-key my-sdb-secret-key
+;               (.withServiceURL (com.amazonaws.sdb.AmazonSimpleDBConfig.)
+;                                "http://localhost:8080")))
+
+(doto (create-client *AWS-ACCESS-KEY-ID* *AWS-SECRET-ACCESS-KEY*)
+      (.setEndpoint "http://localhost:8080"))
+
 </pre>
+
+NOTE: 
+Project was updated to the latest amazon SDK which is currently not
+supported by SimpleDB-dev
+
